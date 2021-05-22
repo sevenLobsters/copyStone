@@ -1,5 +1,7 @@
 package stone;
 
+import stone.ast.ASTLeaf;
+import stone.ast.ASTList;
 import stone.ast.ASTree;
 
 import java.lang.reflect.Constructor;
@@ -231,7 +233,7 @@ public class Parser {
         protected Operators ops;
         protected Parser factor;
 
-        protected Expr(Class<? extends ASTree> clazz, Operators map, Parser exp) {
+        protected Expr(Class<? extends ASTree> clazz, Parser exp, Operators map) {
             this.factory = factory;
             this.ops = map;
             this.factor = exp;
@@ -242,7 +244,7 @@ public class Parser {
         protected void parse(Lexer lexer, List<ASTree> res) throws ParseException {
             ASTree right = factor.parse(lexer);
             Precedence prec;
-            while ((prec = nexOperator(lexer))!=null){
+            while ((prec = nextOperator(lexer))!=null){
                 right = doShift(lexer,right,prec.value);
             }
             res.add(right);
@@ -253,14 +255,14 @@ public class Parser {
             list.add(left);
             list.add(new ASTLeaf(lexer.read()));
             ASTree right = factor.parse(lexer);
-            Precedence next;
-            while (next == nextOperator(lexer)!=null && rightIsExpr(prec,next)){
+            Precedence next = null;
+            while ((next = nextOperator(lexer))!=null && rightIsExpr(prec,next)){
                 right = doShift(lexer,right,next.value);
             }
             list.add(right);
             return factory.make(list);
         }
-        private Precedence nexOperator(Lexer lexer) throws ParseException{
+        private Precedence nextOperator(Lexer lexer) throws ParseException{
             Token t = lexer.peek(0);
             if(t.isIdF()){
                 return ops.get(t.getText());
@@ -355,6 +357,15 @@ public class Parser {
         factory = p.factory;
     }
 
+    public ASTree parse(Lexer lexer) throws ParseException{
+        ArrayList<ASTree> results = new ArrayList<>();
+        for(Element e:elements){
+            e.parse(lexer,results);
+        }
+        return factory.make(results);
+    }
+
+
     public boolean match(Lexer lexer) throws ParseException{
         if(elements.size() == 0) return true;
         else{
@@ -415,6 +426,10 @@ public class Parser {
 
     public Parser ast(Parser p){
         elements.add(new Tree(p));
+        return this;
+    }
+    public Parser or(Parser... p){
+        elements.add(new OrTree(p));
         return this;
     }
 
