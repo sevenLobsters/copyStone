@@ -234,7 +234,7 @@ public class Parser {
         protected Parser factor;
 
         protected Expr(Class<? extends ASTree> clazz, Parser exp, Operators map) {
-            this.factory = factory;
+            this.factory = Factory.getForASTList(clazz);
             this.ops = map;
             this.factor = exp;
         }
@@ -256,7 +256,8 @@ public class Parser {
             list.add(new ASTLeaf(lexer.read()));
             ASTree right = factor.parse(lexer);
             Precedence next = null;
-            while ((next = nextOperator(lexer))!=null && rightIsExpr(prec,next)){
+            while ((next = nextOperator(lexer))!=null
+                    && rightIsExpr(prec,next)){
                 right = doShift(lexer,right,next.value);
             }
             list.add(right);
