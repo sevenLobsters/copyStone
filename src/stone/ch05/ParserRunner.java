@@ -10,6 +10,7 @@ public class ParserRunner {
         while (l.peek(0) != Token.EOF){
             ASTree ast = bp.parse(l);
             System.out.println("=> "+ast.toString());
+
         }
     }
 
